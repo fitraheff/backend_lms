@@ -4,7 +4,7 @@ const username = Joi.string()
     .min(3)
     .max(100)
     .trim()
-    .required()
+    // .required()
     .messages({
         'string.min': 'name minimal 3 karakter',
         'any.required': 'name wajib diisi',
@@ -15,7 +15,7 @@ const email = Joi.string()
     .lowercase()
     .trim()
     .max(255)
-    .required()
+    // .required()
     .messages({
         'string.email': 'Email tidak valid',
         'any.required': 'Email wajib diisi',
@@ -23,9 +23,8 @@ const email = Joi.string()
 
 const password = Joi.string()
     .min(6)
-    .max(100)
-    .required()
-    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])?[A-Za-z\\d@$!%*?&]{8,}$'))
+    // .required()
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .message({
         'string.pattern.base': 'Password harus mengandung huruf besar, huruf kecil, dan angka',
         'string.min': 'Password minimal 6 karakter'
@@ -46,16 +45,29 @@ const loginUserValidation = Joi.object({
 const getUserValidation = Joi.string().max(100).required();
 
 const updateUserValidation = Joi.object({
+    username: username.optional(),
     email: email.optional(),
-    name: username.optional(),
     password: password.optional(),
-    newPassword: Joi.alternatives().conditional('password', {
-        is: Joi.exist(),
-        then: password.invalid(Joi.ref('password')),
-        otherwise: Joi.forbidden()
-    }),
-}).with('password', 'newPassword') // Pastikan keduanya ada bersama
-    .strict(); // Tolak properti yang tidak terdefinisi
+    currentPassword: Joi.string()
+        .min(6)
+        .when("password", {
+            switch: [
+                {
+                    is: Joi.exist().not(null),
+                    then: Joi.required().messages({
+                        "any.required": "Current password wajib diisi untuk mengganti password baru",
+                    }),
+                },
+                { otherwise: Joi.forbidden() },
+            ],
+        })
+})
+    .or("name", "email", "password") // minimal salah satu field ini ada
+    .unknown(false) // blokir field yang tidak didefinisikan
+    .messages({
+        "object.min": "Minimal harus mengisi satu field untuk update",
+        "object.unknown": "Field {{key}} tidak diizinkan",
+    });
 
 
 export {
