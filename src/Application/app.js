@@ -2,8 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import { config } from '../utils/config';
-import { rateLimiter } from '../middleware/rateLimiter.js';
+import { config } from '../utils/config.js';
+import { limiter } from '../middlewares/rate-limiter-middlaware.js';
 import { errorMiddleware } from '../middlewares/error-middlaware.js';
 
 export const App = express();
@@ -15,7 +15,8 @@ App.use(cors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
 }))
-App.use(rateLimiter)
+
+App.use(limiter)
 
 App.get('/health', (req, res) => {
     res.status(200).send('OK');
