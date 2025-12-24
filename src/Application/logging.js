@@ -17,11 +17,25 @@ const fileFormat = winston.format.combine(
 
 const logger = winston.createLogger({
     level: process.env.NODE_ENV === "production" ? "info" : "debug",
-    format: fileFormat,
+    // defaultMeta: { service: "lms-api" },
+    // format: fileFormat,
     transports: [
         // Always log to file
-        new winston.transports.File({ filename: "logs/error.log", level: "error" }),
-        new winston.transports.File({ filename: "logs/combined.log" }),
+        new winston.transports.File({
+            filename: "logs/error.log",
+            level: "error",
+            format: fileFormat,
+            maxsize: 10 * 1024 * 1024, // 10MB
+            maxFiles: 5,
+            zippedArchive: true,
+        }),
+        new winston.transports.File({
+            filename: "logs/combined.log",
+            format: fileFormat,
+            maxsize: 20 * 1024 * 1024, // 10MB
+            maxFiles: 5,
+            zippedArchive: true,
+        }),
 
         // Console hanya di non-production atau kalau di-force
         ...(process.env.NODE_ENV !== "production"
@@ -33,4 +47,6 @@ const logger = winston.createLogger({
 // logger.info('Information message');
 // logger.error('Error message');
 
-export default logger;
+export {
+    logger
+};

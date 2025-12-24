@@ -5,17 +5,21 @@ import cookieParser from 'cookie-parser';
 import { config } from '../utils/config.js';
 import { limiter } from '../middlewares/rate-limiter-middlaware.js';
 import { errorMiddleware } from '../middlewares/error-middlaware.js';
+import { morganMiddleware } from '../middlewares/morgan-middlaware.js';
 
 export const App = express();
-App.use(express.json());
-App.use(cookieParser());
+
 App.use(helmet());
+
 App.use(cors({
     origin: config.frontendUrl,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
 }))
 
+App.use(cookieParser());
+App.use(express.json());
+App.use(morganMiddleware)
 App.use(limiter)
 
 App.get('/health', (req, res) => {
@@ -23,7 +27,7 @@ App.get('/health', (req, res) => {
 });
 
 // Routes
-App.use('api/users', /* userRoutes */);
+// App.use('api/users', /* userRoutes */);
 
 App.use(errorMiddleware)
 
