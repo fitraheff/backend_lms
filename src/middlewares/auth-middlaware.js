@@ -4,11 +4,11 @@ import { ResponseError } from '../utils/response-error.js';
 
 export const authMiddleware = async (req, res, next) => {
     try {
-        const token = req.cookies.token;
-
-        if (!token) {
-            throw new ResponseError('Unauthorized: Access token required', 401);
+        const authHeader = req.headers.authorization;
+        if (!authHeader?.startsWith('Bearer ')) {
+            throw new ResponseError('Authorized: No token provided', 401);
         }
+        const token = authHeader.split(' ')[1];
 
         const data = verifyAccessToken(token);
 

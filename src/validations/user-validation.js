@@ -69,10 +69,17 @@ const updateUserValidation = Joi.object({
         "object.unknown": "Field {{key}} tidak diizinkan",
     });
 
+const createInstructorValidation = Joi.object({
+    name: username.required(),
+    email: email.required(),
+    password: password.required(),
+})
+
 
 export {
     loginUserValidation,
     registerUserValidation,
     getUserValidation,
     updateUserValidation,
+    createInstructorValidation
 }
