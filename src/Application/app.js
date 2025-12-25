@@ -7,6 +7,8 @@ import { limiter } from '../middlewares/rate-limiter-middlaware.js';
 import { errorMiddleware } from '../middlewares/error-middlaware.js';
 import { morganMiddleware } from '../middlewares/morgan-middlaware.js';
 
+import userRoute from '../routes/user-api.js';
+
 export const App = express();
 
 App.use(helmet());
@@ -27,7 +29,7 @@ App.get('/health', (req, res) => {
 });
 
 // Routes
-// App.use('api/users', /* userRoutes */);
+App.use('/api/users', userRoute);
 
 App.use(errorMiddleware)
 

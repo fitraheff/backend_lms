@@ -2,7 +2,7 @@ import { prisma } from '../Application/prisma.js';
 import { verifyAccessToken } from '../utils/jwt.js';
 import { ResponseError } from '../utils/response-error.js';
 
-export const authMiddleware = async (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader?.startsWith('Bearer ')) {
@@ -37,7 +37,7 @@ export const authMiddleware = async (req, res, next) => {
     }
 }
 
-export const restrictTo = (...allowedRoles) => {
+const restrictTo = (...allowedRoles) => {
     return (req, res, next) => {
         if (!req.user) {
             res.status(401).json({ message: 'Unauthorized' });
@@ -49,4 +49,9 @@ export const restrictTo = (...allowedRoles) => {
         }
         next();
     }
+}
+
+export default {
+    authMiddleware,
+    restrictTo
 }
