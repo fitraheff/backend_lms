@@ -20,22 +20,36 @@ const defaultUserSelect = {
     name: true,
     email: true,
     role: true,
-    createdAt: true,
-    updatedAt: true,
+    // createdAt: true,
+    // updatedAt: true,
 };
 
 const findUser = async ({ id, email, select = defaultUserSelect }) => {
     if (!id && !email) {
-        throw new Error("id atau email harus disediakan");
+        throw new ResponseError("id atau email harus disediakan", 400);
     }
 
-    return prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
         where: id ? { id } : { email },
-        select, // kalau undefined → ambil default Prisma (semua field)
+        select,
+    });
+
+    if (!user) throw new ResponseError("User tidak ditemukan", 404);
+    return user;
+};
+
+const setRefreshTokenCookie = (res, refreshToken) => {
+    res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: config.env === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 };
 
-
+const clearRefreshTokenCookie = (res) => {
+    res.clearCookie("refreshToken");
+};
 
 // Google OAuth Setup
 const oauth2Client = new google.auth.OAuth2(
@@ -58,7 +72,7 @@ const getGoogleLoginUrl = () => {
 };
 
 // GOOGLE callback login
-const googleCallback = async (code) => {
+const googleCallback = async (code, res) => {
     if (!code) throw new ResponseError("No code provided", 400);
 
     const { tokens } = await oauth2Client.getToken(code);
@@ -115,6 +129,7 @@ const googleCallback = async (code) => {
     });
 
     // Set httpOnly cookie
+    setRefreshTokenCookie(res, refreshToken);
     // res.cookie("refreshToken", refreshToken, {
     //     httpOnly: true,
     //     secure: config.env === "production",
@@ -123,28 +138,25 @@ const googleCallback = async (code) => {
     // });
 
     return {
+        accessToken,
+        refreshToken,
         user: {
             id: user.id,
             name: user.name,
             email: user.email,
             role: user.role,
-        },
-        accessToken,
-        refreshToken,
+        }
     };
 };
 
 const login = async (req, res) => {
-    const data = validate(loginUserValidation, req);
+    const { email, password } = validate(loginUserValidation, req);
 
     const user = await findUser({
-        email: data.email,
+        email: email,
         select: {
-            id: true,
-            name: true,
-            email: true,
+            ...defaultUserSelect,
             password: true,
-            role: true,
         },
     })
 
@@ -162,8 +174,8 @@ const login = async (req, res) => {
     // });
 
 
-    if (!user || !(await bcrypt.compare(data.password, user.password))) {
-        throw new ResponseError(401, 'Invalid email or password');
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+        throw new ResponseError(401, 'Invalid email or password', 401);
     }
 
     const accessToken = generateToken({ id: user.id, role: user.role });
@@ -175,12 +187,13 @@ const login = async (req, res) => {
     });
 
     // Set cookie refresh token
-    res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: config.env === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    setRefreshTokenCookie(res, refreshToken);
+    // res.cookie("refreshToken", refreshToken, {
+    //     httpOnly: true,
+    //     secure: config.env === "production",
+    //     sameSite: "strict",
+    //     maxAge: 7 * 24 * 60 * 60 * 1000,
+    // });
 
     return {
         accessToken,
@@ -193,17 +206,12 @@ const login = async (req, res) => {
     };
 }
 
+// Registrasi user/student baru
 const register = async (req) => {
     const data = validate(registerUserValidation, req);
 
     const user = await findUser({
         email: data.email,
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true
-        }
     });
 
     // const user = await prisma.user.findUnique({
@@ -238,15 +246,7 @@ const getById = async (req) => {
     const data = validate(getUserValidation, req);
 
     const user = await findUser({
-        id: data,
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            createdAt: true,
-            updatedAt: true
-        }
+        id: data
     });
 
     // const user = await prisma.user.findUnique({
@@ -291,11 +291,8 @@ const update = async (req, userId) => {
     const user = await findUser({
         id: userId,
         select: {
-            id: true,
-            name: true,
-            email: true,
+            ...defaultUserSelect,
             password: true,
-            role: true,
             updatedAt: true,
         }
     });
@@ -362,12 +359,13 @@ const remove = async (id) => {
 }
 
 // pake http-only cookie
-export const logout = async (req, res) => {
-    const refreshToken = req.cookies.refreshToken;
+const logout = async (req, res) => {
+    const refreshToken = req;
     if (refreshToken) {
         // Cari user yang punya refreshToken ini (hashed)
         const users = await prisma.user.findMany({
             where: { refreshToken: { not: null } },
+            select: { id: true, refreshToken: true },
         });
 
         for (const user of users) {
@@ -382,14 +380,15 @@ export const logout = async (req, res) => {
         }
     }
 
-    res.clearCookie("refreshToken", { httpOnly: true, sameSite: "strict", secure: config.env === "production" });
-    return res.json({ message: "Logged out successfully" });
+    clearRefreshTokenCookie(res);
+    // res.clearCookie("refreshToken", { httpOnly: true, sameSite: "strict", secure: config.env === "production" });
+    // return res.json({ message: "Logged out successfully" });
 };
 
-const createInstructor = async (req, res) => {
+const createInstructor = async (req) => {
     // authenticate + restrictTo("ADMIN") di route
 
-    const data = validate(createInstructorValidation, req.body); // { name, email }
+    const data = validate(createInstructorValidation, req); // { name, email }
 
     const existingUser = await findUser({
         email: data.email,
@@ -420,15 +419,18 @@ const createInstructor = async (req, res) => {
     // Kirim email: "Akun instructor kamu sudah dibuat. Login di link ini..."
     // sendEmail(data.email, "Akun Instructor", `Password sementara: ${tempPassword}`);
 
-    return res.json({
-        message: "Instructor berhasil dibuat",
-        user: { id: user.id, name: user.name, email: user.email },
+    return {
+        user: {
+            id: user.id,
+            name: user.name,
+            email: user.email
+        },
         // temporaryPassword: tempPassword, // hanya di dev, matikan di prod
-    });
+    };
 };
 
 const refreshToken = async (req, res) => {
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req;
     if (!refreshToken) throw new ResponseError("Refresh token required", 401);
 
     let payload;
@@ -438,8 +440,11 @@ const refreshToken = async (req, res) => {
         throw new ResponseError("Invalid or expired refresh token", 401);
     }
 
-    const user = await prisma.user.findUnique({
-        where: { id: payload.userId },
+    const user = await findUser({
+        id: payload.id,
+        select: { 
+            refreshToken: true 
+        }
     });
 
     if (!user || !user.refreshToken) {
@@ -459,14 +464,18 @@ const refreshToken = async (req, res) => {
         data: { refreshToken: await bcrypt.hash(newRefreshToken, 10) },
     });
 
-    res.cookie("refreshToken", newRefreshToken, {
-        httpOnly: true,
-        secure: config.env === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    // Set httpOnly cookie
+    setRefreshTokenCookie(res, newRefreshToken);
+    // res.cookie("refreshToken", newRefreshToken, {
+    //     httpOnly: true,
+    //     secure: config.env === "production",
+    //     sameSite: "strict",
+    //     maxAge: 7 * 24 * 60 * 60 * 1000,
+    // });
 
-    return res.json({ accessToken: newAccessToken });
+    return {
+        accessToken: newAccessToken
+    };
 };
 
 
