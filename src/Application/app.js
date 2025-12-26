@@ -1,0 +1,35 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
+import { config } from '../utils/config.js';
+import { limiter } from '../middlewares/rate-limiter-middlaware.js';
+import { errorMiddleware } from '../middlewares/error-middlaware.js';
+import { morganMiddleware } from '../middlewares/morgan-middlaware.js';
+
+import userRoute from '../routes/user-api.js';
+
+export const App = express();
+
+App.use(helmet());
+
+App.use(cors({
+    origin: config.frontendUrl,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+}))
+
+App.use(cookieParser());
+App.use(express.json());
+App.use(morganMiddleware)
+App.use(limiter)
+
+App.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
+// Routes
+App.use('/api/users', userRoute);
+
+App.use(errorMiddleware)
+

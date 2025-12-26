@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+
+  @@map("roles")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique @db.VarChar(255)
+  googleId          String?  @unique @db.VarChar(255)
+  emailVerified     Boolean @default(false)
+
+  name              String?   @db.VarChar(255)
+  password          String?  @db.VarChar(255)
+
+
+  role              Role     @default(STUDENT)
+
+  refreshToken      String? @db.Text  
+
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @db.Timestamptz(3)
+
+  //posts Post[]
+
+  @@index([email])
+  @@index([role])
+
+  @@map("users")
+}
+
+//model Post {
+//  id        Int     @id @default(autoincrement())
+//  title     String
+//  content   String?
+// published Boolean @default(false)
+//  author    User    @relation(fields: [authorId], references: [id])
+//  authorId  Int
+//}
