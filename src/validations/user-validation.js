@@ -1,33 +1,34 @@
 import Joi from "joi";
 
 const username = Joi.string()
+    .required()
     .min(3)
     .max(100)
     .trim()
-    // .required()
     .messages({
         'string.min': 'name minimal 3 karakter',
         'any.required': 'name wajib diisi',
     });
 
 const email = Joi.string()
+    .required()
     .email({ tlds: { allow: ['com', 'org', 'net'] } })
     .lowercase()
     .trim()
     .max(255)
-    // .required()
     .messages({
         'string.email': 'Email tidak valid',
         'any.required': 'Email wajib diisi',
     });
 
 const password = Joi.string()
+    .required()
     .min(6)
-    // .required()
     .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .message({
+    .messages({
+        'any.required': 'Password wajib diisi',
+        'string.min': 'Password minimal 6 karakter',
         'string.pattern.base': 'Password harus mengandung huruf besar, huruf kecil, dan angka',
-        'string.min': 'Password minimal 6 karakter'
     });
 
 const registerUserValidation = Joi.object({
@@ -39,7 +40,7 @@ const registerUserValidation = Joi.object({
 
 const loginUserValidation = Joi.object({
     email: email,
-    password: password.optional(),
+    password: password
 })
 
 const getUserValidation = Joi.string().max(100).required();
@@ -66,10 +67,18 @@ const updateUserValidation = Joi.object({
     });
 
 const createInstructorValidation = Joi.object({
-    name: username.required(),
-    email: email.required(),
-    password: password.required(),
+    name: username,
+    email: email,
+    password: password,
 })
+
+const setPasswordValidation = Joi.object({
+    password: password.required(),
+    confirmPassword: Joi.string().valid(Joi.ref('password')).required().messages({
+        "any.only": "Password dan confirm password harus sama",
+        "any.required": "Confirm password wajib diisi",
+    }),
+});
 
 
 export {
@@ -77,5 +86,6 @@ export {
     registerUserValidation,
     getUserValidation,
     updateUserValidation,
-    createInstructorValidation
+    createInstructorValidation,
+    setPasswordValidation
 }
