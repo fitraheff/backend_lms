@@ -44,9 +44,6 @@ const logger = winston.createLogger({
     ],
 });
 
-// logger.info('Information message');
-// logger.error('Error message');
-
 export {
     logger
 };

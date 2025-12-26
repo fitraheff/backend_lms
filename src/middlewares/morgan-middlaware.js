@@ -7,7 +7,7 @@ const morganMiddleware = morgan("combined",
             write: (message) => logger.http(message.trim()),
         },
         skip: (req, res) =>
-            // req.url === "/health" ||
+            req.url === "/health" ||
             process.env.NODE_ENV === "test" ||
             req.url.startsWith('/static') ||
             (process.env.NODE_ENV === "production" && res.statusCode < 400),

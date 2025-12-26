@@ -2,8 +2,8 @@ import bcrypt from 'bcrypt';
 import { google } from 'googleapis';
 
 import { prisma } from "../Application/prisma.js";
-import { generateToken } from "../utils/jwt.js";
-import { verifyRefreshToken } from "../utils/jwt.js";
+import tokenjwt from "../utils/jwt.js";
+// import { verifyRefreshToken } from "../utils/jwt.js";
 import { ResponseError } from "../utils/response-error.js";
 import { config } from "../utils/config.js";
 import { validate } from "../validations/validation.js";
@@ -53,9 +53,9 @@ const clearRefreshTokenCookie = (res) => {
 
 // Google OAuth Setup
 const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    `${config.baseUrl}/auth/google/callback` // gunakan config, bukan hardcode localhost
+    config.googleClientId,
+    config.googleClientSecret,
+    `${config.baseUrl}/api/users/google-callback` // gunakan config, bukan hardcode localhost
 );
 
 const scopes = [
@@ -68,6 +68,7 @@ const getGoogleLoginUrl = () => {
         access_type: "offline", // Biar dapet "kunci cadangan" (refresh token) untuk akses kapan saja
         prompt: "consent",      // Paksa munculin layar izin supaya refresh token selalu dikirim ulang
         scope: scopes,          // Daftar izin data apa saja yang boleh diakses aplikasi
+        include_granted_scopes: true // Sertakan izin yang sudah pernah diberikan sebelumnya
     });
 };
 
@@ -81,20 +82,22 @@ const googleCallback = async (code, res) => {
     const oauth2 = google.oauth2({ auth: oauth2Client, version: "v2" });
     const { data } = await oauth2.userinfo.get();
 
-    if (!data.email || !data.name) {
+    if (!data.email || !data.id) {
         throw new ResponseError("Failed to get user info from Google", 400);
     }
 
     // Cari user berdasarkan googleId atau email
-    let user = await prisma.user.findFirst({
-        where: {
-            OR: [
-                { googleId: data.id },
-                { email: data.email }
-            ]
-        }
+    let user = await prisma.user.findUnique({
+        where: { googleId: data.id }
     });
 
+    if (!user) {
+        user = await prisma.user.findUnique({
+            where: { email: data.email },
+        });
+    }
+
+    // Jika user tidak ditemukan
     if (!user) {
         // Buat user baru
         user = await prisma.user.create({
@@ -106,19 +109,17 @@ const googleCallback = async (code, res) => {
                 role: "STUDENT", // default role
             },
         });
-    } else {
+    } else if (!user.googleId) {
         // Update googleId kalau belum ada (link account)
-        if (!user.googleId) {
-            user = await prisma.user.update({
-                where: { id: user.id },
-                data: { googleId: data.sub },
-            });
-        }
+        user = await prisma.user.update({
+            where: { id: user.id },
+            data: { googleId: data.sub },
+        });
     }
 
     // Generate token SAMA seperti login biasa
-    const accessToken = generateToken({ id: user.id, role: user.role });
-    const refreshToken = generateToken({ id: user.id }, false);
+    const accessToken = tokenjwt.generateAccessToken({ id: user.id, role: user.role });
+    const refreshToken = tokenjwt.generateRefreshToken({ id: user.id });
 
     // Simpan hashed refresh token di DB (untuk revoke nanti)
     await prisma.user.update({
@@ -130,16 +131,9 @@ const googleCallback = async (code, res) => {
 
     // Set httpOnly cookie
     setRefreshTokenCookie(res, refreshToken);
-    // res.cookie("refreshToken", refreshToken, {
-    //     httpOnly: true,
-    //     secure: config.env === "production",
-    //     sameSite: "strict",
-    //     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 hari
-    // });
 
     return {
         accessToken,
-        refreshToken,
         user: {
             id: user.id,
             name: user.name,
@@ -160,26 +154,12 @@ const login = async (req, res) => {
         },
     })
 
-    // const user = await prisma.user.findUnique({
-    //     where: {
-    //         email: data.email
-    //     },
-    //     select: {
-    //         id: true,
-    //         name: true,
-    //         email: true,
-    //         password: true,
-    //         role: true
-    //     }
-    // });
-
-
     if (!user || !(await bcrypt.compare(password, user.password))) {
         throw new ResponseError(401, 'Invalid email or password', 401);
     }
 
-    const accessToken = generateToken({ id: user.id, role: user.role });
-    const refreshToken = generateToken({ id: user.id }, false);
+    const accessToken = tokenjwt.generateAccessToken({ id: user.id, role: user.role });
+    const refreshToken = tokenjwt.generateRefreshToken({ id: user.id });
 
     await prisma.user.update({
         where: { id: user.id },
@@ -188,12 +168,6 @@ const login = async (req, res) => {
 
     // Set cookie refresh token
     setRefreshTokenCookie(res, refreshToken);
-    // res.cookie("refreshToken", refreshToken, {
-    //     httpOnly: true,
-    //     secure: config.env === "production",
-    //     sameSite: "strict",
-    //     maxAge: 7 * 24 * 60 * 60 * 1000,
-    // });
 
     return {
         accessToken,
@@ -212,13 +186,8 @@ const register = async (req) => {
 
     const user = await findUser({
         email: data.email,
+        select: { email: true }
     });
-
-    // const user = await prisma.user.findUnique({
-    //     where: {
-    //         email: data.email
-    //     }
-    // });
 
     if (user) {
         throw new ResponseError(400, "email already exists");
@@ -243,26 +212,11 @@ const register = async (req) => {
 }
 
 const getById = async (req) => {
-    const data = validate(getUserValidation, req);
+    const { id } = validate(getUserValidation, req);
 
     const user = await findUser({
-        id: data
+        id: id
     });
-
-    // const user = await prisma.user.findUnique({
-    //     where: {
-    //         id: data
-    //     },
-    //     select: {
-    //         id: true,
-    //         name: true,
-    //         email: true,
-    //         role: true,
-    //         telp: true,
-    //         createdAt: true,
-    //         updatedAt: true
-    //     }
-    // });
 
     if (!user) {
         throw new ResponseError(404, "user is not found");
@@ -297,12 +251,6 @@ const update = async (req, userId) => {
         }
     });
 
-    // const user = await prisma.user.findUnique({
-    //     where: {
-    //         id: userId
-    //     }
-    // });
-
     if (!user) {
         throw new ResponseError(404, "user is not found");
     }
@@ -334,12 +282,6 @@ const update = async (req, userId) => {
 }
 
 const remove = async (id) => {
-    // id = validate(getUserValidation, id);
-    // const user = await prisma.user.findUnique({
-    //     where: {
-    //         id: id
-    //     }
-    // });;
     const user = await findUser({
         id,
         select: {
@@ -381,8 +323,6 @@ const logout = async (req, res) => {
     }
 
     clearRefreshTokenCookie(res);
-    // res.clearCookie("refreshToken", { httpOnly: true, sameSite: "strict", secure: config.env === "production" });
-    // return res.json({ message: "Logged out successfully" });
 };
 
 const createInstructor = async (req) => {
@@ -394,9 +334,6 @@ const createInstructor = async (req) => {
         email: data.email,
         select: { email: true }
     });
-    // const existingUser = await prisma.user.findUnique({
-    //     where: { email: data.email },
-    // });
 
     if (existingUser) {
         throw new ResponseError("Email sudah terdaftar", 400);
@@ -416,9 +353,6 @@ const createInstructor = async (req) => {
         },
     });
 
-    // Kirim email: "Akun instructor kamu sudah dibuat. Login di link ini..."
-    // sendEmail(data.email, "Akun Instructor", `Password sementara: ${tempPassword}`);
-
     return {
         user: {
             id: user.id,
@@ -435,15 +369,15 @@ const refreshToken = async (req, res) => {
 
     let payload;
     try {
-        payload = verifyRefreshToken(refreshToken);
+        payload = tokenjwt.verifyRefreshToken(refreshToken);
     } catch {
         throw new ResponseError("Invalid or expired refresh token", 401);
     }
 
     const user = await findUser({
         id: payload.id,
-        select: { 
-            refreshToken: true 
+        select: {
+            refreshToken: true
         }
     });
 
@@ -455,9 +389,9 @@ const refreshToken = async (req, res) => {
     const isValid = await bcrypt.compare(refreshToken, user.refreshToken);
     if (!isValid) throw new ResponseError("Invalid refresh token", 401);
 
-    const newAccessToken = generateToken({ id: user.id, role: user.role });
+    const newAccessToken = tokenjwt.generateAccessToken({ id: user.id, role: user.role });
     // Optional: rotate refresh token
-    const newRefreshToken = generateToken({ id: user.id }, false);
+    const newRefreshToken = tokenjwt.generateRefreshToken({ id: user.id });
 
     await prisma.user.update({
         where: { id: user.id },
@@ -466,12 +400,6 @@ const refreshToken = async (req, res) => {
 
     // Set httpOnly cookie
     setRefreshTokenCookie(res, newRefreshToken);
-    // res.cookie("refreshToken", newRefreshToken, {
-    //     httpOnly: true,
-    //     secure: config.env === "production",
-    //     sameSite: "strict",
-    //     maxAge: 7 * 24 * 60 * 60 * 1000,
-    // });
 
     return {
         accessToken: newAccessToken

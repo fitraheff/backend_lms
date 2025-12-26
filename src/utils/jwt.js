@@ -3,19 +3,17 @@ import { config } from '../utils/config.js';
 import { ResponseError } from './response-error.js';
 // import { UnauthorizedError } from '../errors/UnauthorizedError.js';
 
-export const generateToken = (data, access = true) => {
-    const secret = access
-        ? config.accesTokenSecret
-        : config.refreshTokenSecret;
-    const expiry = access
-        ? config.accessTokenExpiresIn
-        : config.refreshTokenExpiresIn;
-    return jwt.sign(data, secret, { expiresIn: parseInt(expiry) });
+const generateAccessToken = (payload) => {
+    return jwt.sign(payload, config.accessTokenSecret, { expiresIn: config.accessTokenExpiresIn });
 };
 
-export const verifyAccessToken = (token) => {
+const generateRefreshToken = (payload) => {
+    return jwt.sign(payload, config.refreshTokenSecret, { expiresIn: config.refreshTokenExpiresIn });
+};
+
+const verifyAccessToken = (token) => {
     try {
-        return jwt.verify(token, config.accesTokenSecret);
+        return jwt.verify(token, config.accessTokenSecret);
     } catch (err) {
         if (err.name === 'TokenExpiredError') {
             throw new ResponseError('Token expired', 401);
@@ -27,10 +25,17 @@ export const verifyAccessToken = (token) => {
     }
 };
 
-export const verifyRefreshToken = (token) => {
+const verifyRefreshToken = (token) => {
     try {
         return jwt.verify(token, config.refreshTokenSecret);
     } catch {
         throw new ResponseError('Invalid or expired refresh token", 401');
     }
+};
+
+export default {
+    generateAccessToken,
+    generateRefreshToken,
+    verifyAccessToken,
+    verifyRefreshToken
 };

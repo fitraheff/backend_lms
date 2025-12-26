@@ -1,6 +1,6 @@
 import { prisma } from '../Application/prisma.js';
-import { verifyAccessToken } from '../utils/jwt.js';
 import { ResponseError } from '../utils/response-error.js';
+import tokenjwt from '../utils/jwt.js';
 
 const authMiddleware = async (req, res, next) => {
     try {
@@ -10,7 +10,7 @@ const authMiddleware = async (req, res, next) => {
         }
         const token = authHeader.split(' ')[1];
 
-        const data = verifyAccessToken(token);
+        const data = tokenjwt.verifyAccessToken(token);
 
         const user = await prisma.user.findUnique({
             where: { id: data.id },

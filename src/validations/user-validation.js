@@ -39,28 +39,24 @@ const registerUserValidation = Joi.object({
 
 const loginUserValidation = Joi.object({
     email: email,
-    password: password
+    password: password.optional(),
 })
 
 const getUserValidation = Joi.string().max(100).required();
 
 const updateUserValidation = Joi.object({
-    username: username.optional(),
+    name: username.optional(),
     email: email.optional(),
     password: password.optional(),
     currentPassword: Joi.string()
         .min(6)
         .when("password", {
-            switch: [
-                {
-                    is: Joi.exist().not(null),
-                    then: Joi.required().messages({
-                        "any.required": "Current password wajib diisi untuk mengganti password baru",
-                    }),
-                },
-                { otherwise: Joi.forbidden() },
-            ],
-        })
+            is: Joi.exist().not(null),
+            then: Joi.required().messages({
+                "any.required": "Current password wajib diisi untuk mengganti password baru",
+            }),
+            otherwise: Joi.forbidden(),
+        }),
 })
     .or("name", "email", "password") // minimal salah satu field ini ada
     .unknown(false) // blokir field yang tidak didefinisikan
