@@ -29,7 +29,7 @@ App.get('/health', (req, res) => {
 });
 
 // Routes
-App.use('/api/users', userRoute);
+App.use('/api/V1/users', userRoute);
 
 App.use(errorMiddleware)
 

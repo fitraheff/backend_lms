@@ -163,6 +163,22 @@ const refreshToken = async (req, res, next) => {
     }
 }
 
+const setPassword = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const data = req.body;
+        const result = await userService.setPassword(data, userId);
+        res.status(200).json(
+            {
+                message: "Set password successful",
+                data: result
+            }
+        );
+    } catch (e) {
+        next(e);
+    }
+}
+
 export default {
     googleLogin,
     googleCallback,
@@ -174,5 +190,6 @@ export default {
     remove,
     logout,
     createInstructor,
-    refreshToken
+    refreshToken,
+    setPassword
 }

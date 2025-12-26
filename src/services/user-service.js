@@ -12,7 +12,8 @@ import {
     loginUserValidation,
     getUserValidation,
     updateUserValidation,
-    createInstructorValidation
+    createInstructorValidation,
+    setPasswordValidation
 } from '../validations/user-validation.js';
 
 const defaultUserSelect = {
@@ -34,7 +35,7 @@ const findUser = async ({ id, email, select = defaultUserSelect }) => {
         select,
     });
 
-    if (!user) throw new ResponseError("User tidak ditemukan", 404);
+    // if (!user) throw new ResponseError("User tidak ditemukan", 404);
     return user;
 };
 
@@ -105,7 +106,7 @@ const googleCallback = async (code, res) => {
                 email: data.email,
                 name: data.name || data.email.split("@")[0],
                 emailVerified: data.verified_email || false,
-                googleId: data.sub,
+                googleId: data.id,
                 role: "STUDENT", // default role
             },
         });
@@ -113,7 +114,7 @@ const googleCallback = async (code, res) => {
         // Update googleId kalau belum ada (link account)
         user = await prisma.user.update({
             where: { id: user.id },
-            data: { googleId: data.sub },
+            data: { googleId: data.id },
         });
     }
 
@@ -151,11 +152,32 @@ const login = async (req, res) => {
         select: {
             ...defaultUserSelect,
             password: true,
+            googleId: true
         },
     })
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-        throw new ResponseError(401, 'Invalid email or password', 401);
+    // User tidak ditemukan
+    if (!user) {
+        throw new ResponseError("Email atau password salah", 401);
+    }
+
+    // OAuth-only user
+    if (user.googleId && !user.password) {
+        throw new ResponseError(
+            "Akun ini terdaftar via Google. Silakan login menggunakan Google.",
+            400
+        );
+    }
+
+    // Safety guard (seharusnya tidak kejadian)
+    if (!user.password) {
+        throw new ResponseError("Password belum diset", 400);
+    }
+
+    // Password check
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+        throw new ResponseError("Email atau password salah", 401);
     }
 
     const accessToken = tokenjwt.generateAccessToken({ id: user.id, role: user.role });
@@ -261,7 +283,23 @@ const update = async (req, userId) => {
     if (data.email) dataToUpdate.email = data.email;
 
     if (data.password) {
-        if (!data.currentPassword || !(await bcrypt.compare(data.currentPassword, user.password || ""))) {
+        if (!user.password) {
+            throw new ResponseError(
+                "Akun ini belum memiliki password. Gunakan set password.",
+                400
+            );
+        }
+
+        if (!data.currentPassword) {
+            throw new ResponseError("Current password wajib diisi", 400);
+        }
+
+        const valid = await bcrypt.compare(
+            data.currentPassword,
+            user.password
+        );
+
+        if (!valid) {
             throw new ResponseError("Password saat ini salah", 400);
         }
         dataToUpdate.password = await bcrypt.hash(data.password, 12);
@@ -406,6 +444,45 @@ const refreshToken = async (req, res) => {
     };
 };
 
+const setPassword = async (req, userId) => {
+    const { password } = validate(setPasswordValidation, req.body);
+
+    const user = await findUser({
+        id: userId,
+        select: { id: true, password: true, googleId: true },
+    });
+
+    if (!user) {
+        throw new ResponseError("User tidak ditemukan", 404);
+    }
+
+    if (user.password) {
+        throw new ResponseError(
+            "Password sudah disetel. Gunakan menu ganti password.",
+            400
+        );
+    }
+
+    if (!user.googleId) {
+        throw new ResponseError(
+            "Fitur ini hanya untuk akun yang terdaftar via Google.",
+            400
+        );
+    }
+
+    const hashed = await bcrypt.hash(password, 12);
+
+    return prisma.user.update({
+        where: { id: userId },
+        data: { password: hashed },
+        select: {
+            id: true,
+            email: true,
+        }
+    });
+};
+
+
 
 export default {
     getGoogleLoginUrl,
@@ -418,5 +495,6 @@ export default {
     update,
     remove,
     logout,
-    refreshToken
+    refreshToken,
+    setPassword
 }
