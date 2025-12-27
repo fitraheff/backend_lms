@@ -261,7 +261,7 @@ const getAll = async () => {
     });
 }
 
-const update = async ( userId, req) => {
+const update = async (userId, req) => {
     const data = validate(updateUserValidation, req);
 
     const user = await findUser({
@@ -334,33 +334,42 @@ const remove = async (id) => {
     return prisma.user.delete({
         where: {
             id: id
+        },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
         }
     });
 }
 
 // pake http-only cookie
-const logout = async (req, res) => {
-    const refreshToken = req;
-    if (refreshToken) {
-        // Cari user yang punya refreshToken ini (hashed)
-        const users = await prisma.user.findMany({
-            where: { refreshToken: { not: null } },
-            select: { id: true, refreshToken: true },
-        });
+const logout = async (refreshToken, res) => {
+    if (!refreshToken) {
+        clearRefreshTokenCookie(res);
+        return;
+    }
+    // Cari user yang punya refreshToken ini (hashed)
+    const users = await prisma.user.findMany({
+        where: { refreshToken: { not: null } },
+        select: { id: true, refreshToken: true },
+    });
 
-        for (const user of users) {
-            const isMatch = await bcrypt.compare(refreshToken, user.refreshToken || "");
-            if (isMatch) {
-                await prisma.user.update({
-                    where: { id: user.id },
-                    data: { refreshToken: null },
-                });
-                break;
-            }
+    for (const user of users) {
+        const isMatch = await bcrypt.compare(refreshToken, user.refreshToken);
+        if (isMatch) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { refreshToken: null },
+            });
+            break;
         }
     }
 
-    clearRefreshTokenCookie(res);
+clearRefreshTokenCookie(res);
 };
 
 const createInstructor = async (req) => {
@@ -402,8 +411,7 @@ const createInstructor = async (req) => {
     };
 };
 
-const refreshToken = async (req, res) => {
-    const refreshToken = req;
+const refreshToken = async (refreshToken, res) => {
     if (!refreshToken) throw new ResponseError("Refresh token required", 401);
 
     let payload;
@@ -413,10 +421,17 @@ const refreshToken = async (req, res) => {
         throw new ResponseError("Invalid or expired refresh token", 401);
     }
 
+    const userId = payload.id || payload.userId;
+    if (!userId) {
+        throw new ResponseError("Invalid refresh token payload", 401);
+    }
+
     const user = await findUser({
-        id: payload.id,
+        id: userId,
         select: {
-            refreshToken: true
+            id: true,
+            refreshToken: true,
+            role: true
         }
     });
 
@@ -441,7 +456,9 @@ const refreshToken = async (req, res) => {
     setRefreshTokenCookie(res, newRefreshToken);
 
     return {
-        accessToken: newAccessToken
+        id: user.id,
+        accessToken: newAccessToken,
+        role: user.role
     };
 };
 

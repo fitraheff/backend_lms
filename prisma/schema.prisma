@@ -23,7 +23,6 @@ model User {
   name              String?  @db.VarChar(255)
   password          String?  @db.VarChar(255)
 
-
   role              Role     @default(STUDENT)
 
   refreshToken      String? @db.Text  

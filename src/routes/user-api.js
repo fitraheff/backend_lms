@@ -11,8 +11,8 @@ userRoute.post('/register', userController.register);
 userRoute.get('/:id', auth.authMiddleware, userController.getById);
 userRoute.get('/', auth.authMiddleware, userController.getAll);
 userRoute.patch('/', auth.authMiddleware, userController.update);
-userRoute.delete('/:id', auth.authMiddleware, userController.remove);
 userRoute.post('/logout', auth.authMiddleware, userController.logout);
+userRoute.delete('/:id', auth.authMiddleware, auth.restrictTo('ADMIN'), userController.remove);
 userRoute.post('/create-instructor', auth.authMiddleware, auth.restrictTo('ADMIN'), userController.createInstructor);
 userRoute.post('/refresh-token', userController.refreshToken);
 
