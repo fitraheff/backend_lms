@@ -212,7 +212,7 @@ const register = async (req) => {
     });
 
     if (user) {
-        throw new ResponseError(400, "email already exists");
+        throw new ResponseError("email already exists", 400);
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 12);
@@ -242,7 +242,7 @@ const getById = async (req) => {
     });
 
     if (!user) {
-        throw new ResponseError(404, "user is not found");
+        throw new ResponseError("user is not found", 404);
     }
 
     return user;
@@ -255,14 +255,13 @@ const getAll = async () => {
             name: true,
             email: true,
             role: true,
-            telp: true,
             createdAt: true,
             updatedAt: true
         }
     });
 }
 
-const update = async (req, userId) => {
+const update = async (userId, req) => {
     const data = validate(updateUserValidation, req);
 
     const user = await findUser({
@@ -275,7 +274,7 @@ const update = async (req, userId) => {
     });
 
     if (!user) {
-        throw new ResponseError(404, "user is not found");
+        throw new ResponseError("user is not found", 404);
     }
 
     const dataToUpdate = {};
@@ -329,39 +328,48 @@ const remove = async (id) => {
     });
 
     if (!user) {
-        throw new ResponseError(404, "user is not found");
+        throw new ResponseError("user is not found", 404);
     }
 
     return prisma.user.delete({
         where: {
             id: id
+        },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
         }
     });
 }
 
 // pake http-only cookie
-const logout = async (req, res) => {
-    const refreshToken = req;
-    if (refreshToken) {
-        // Cari user yang punya refreshToken ini (hashed)
-        const users = await prisma.user.findMany({
-            where: { refreshToken: { not: null } },
-            select: { id: true, refreshToken: true },
-        });
+const logout = async (refreshToken, res) => {
+    if (!refreshToken) {
+        clearRefreshTokenCookie(res);
+        return;
+    }
+    // Cari user yang punya refreshToken ini (hashed)
+    const users = await prisma.user.findMany({
+        where: { refreshToken: { not: null } },
+        select: { id: true, refreshToken: true },
+    });
 
-        for (const user of users) {
-            const isMatch = await bcrypt.compare(refreshToken, user.refreshToken || "");
-            if (isMatch) {
-                await prisma.user.update({
-                    where: { id: user.id },
-                    data: { refreshToken: null },
-                });
-                break;
-            }
+    for (const user of users) {
+        const isMatch = await bcrypt.compare(refreshToken, user.refreshToken);
+        if (isMatch) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { refreshToken: null },
+            });
+            break;
         }
     }
 
-    clearRefreshTokenCookie(res);
+clearRefreshTokenCookie(res);
 };
 
 const createInstructor = async (req) => {
@@ -396,14 +404,14 @@ const createInstructor = async (req) => {
         user: {
             id: user.id,
             name: user.name,
-            email: user.email
+            email: user.email,
+            role: user.role
         },
         // temporaryPassword: tempPassword, // hanya di dev, matikan di prod
     };
 };
 
-const refreshToken = async (req, res) => {
-    const refreshToken = req;
+const refreshToken = async (refreshToken, res) => {
     if (!refreshToken) throw new ResponseError("Refresh token required", 401);
 
     let payload;
@@ -413,10 +421,17 @@ const refreshToken = async (req, res) => {
         throw new ResponseError("Invalid or expired refresh token", 401);
     }
 
+    const userId = payload.id || payload.userId;
+    if (!userId) {
+        throw new ResponseError("Invalid refresh token payload", 401);
+    }
+
     const user = await findUser({
-        id: payload.id,
+        id: userId,
         select: {
-            refreshToken: true
+            id: true,
+            refreshToken: true,
+            role: true
         }
     });
 
@@ -441,7 +456,9 @@ const refreshToken = async (req, res) => {
     setRefreshTokenCookie(res, newRefreshToken);
 
     return {
-        accessToken: newAccessToken
+        id: user.id,
+        accessToken: newAccessToken,
+        role: user.role
     };
 };
 
