@@ -91,7 +91,7 @@ const getAll = async (req, res, next) => {
 
 const update = async (req, res, next) => {
     try {
-        const userId = req.params.id;
+        const userId = req.params.id || req.user.id;
         const data = req.body;
         const result = await userService.update(userId, data);
         res.status(200).json(

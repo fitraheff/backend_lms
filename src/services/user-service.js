@@ -212,7 +212,7 @@ const register = async (req) => {
     });
 
     if (user) {
-        throw new ResponseError(400, "email already exists");
+        throw new ResponseError("email already exists", 400);
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 12);
@@ -242,7 +242,7 @@ const getById = async (req) => {
     });
 
     if (!user) {
-        throw new ResponseError(404, "user is not found");
+        throw new ResponseError("user is not found", 404);
     }
 
     return user;
@@ -255,14 +255,13 @@ const getAll = async () => {
             name: true,
             email: true,
             role: true,
-            telp: true,
             createdAt: true,
             updatedAt: true
         }
     });
 }
 
-const update = async (req, userId) => {
+const update = async ( userId, req) => {
     const data = validate(updateUserValidation, req);
 
     const user = await findUser({
@@ -275,7 +274,7 @@ const update = async (req, userId) => {
     });
 
     if (!user) {
-        throw new ResponseError(404, "user is not found");
+        throw new ResponseError("user is not found", 404);
     }
 
     const dataToUpdate = {};
@@ -329,7 +328,7 @@ const remove = async (id) => {
     });
 
     if (!user) {
-        throw new ResponseError(404, "user is not found");
+        throw new ResponseError("user is not found", 404);
     }
 
     return prisma.user.delete({
@@ -396,7 +395,8 @@ const createInstructor = async (req) => {
         user: {
             id: user.id,
             name: user.name,
-            email: user.email
+            email: user.email,
+            role: user.role
         },
         // temporaryPassword: tempPassword, // hanya di dev, matikan di prod
     };
