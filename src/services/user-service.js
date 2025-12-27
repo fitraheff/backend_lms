@@ -234,10 +234,11 @@ const register = async (req) => {
 }
 
 const getById = async (req) => {
-    const { id } = validate(getUserValidation, req);
+    const id = validate(getUserValidation, req);
 
     const user = await findUser({
-        id: id
+        id,
+        select: defaultUserSelect
     });
 
     if (!user) {

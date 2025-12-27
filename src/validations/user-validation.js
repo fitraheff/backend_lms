@@ -43,7 +43,13 @@ const loginUserValidation = Joi.object({
     password: password
 })
 
-const getUserValidation = Joi.string().max(100).required();
+const getUserValidation = Joi.string()
+    .max(100)
+    .required()
+    .messages({
+        'any.required': 'ID user wajib diisi',
+        'string.max': 'ID user terlalu panjang',
+    });
 
 const updateUserValidation = Joi.object({
     name: username.optional(),
