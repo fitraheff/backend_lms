@@ -123,15 +123,16 @@ const remove = async (req, res, next) => {
 const logout = async (req, res, next) => {
     try {
         const refreshToken = req.cookies.refreshToken;
+        const { email } = req.user;
         await userService.logout(refreshToken, res);
         res.status(200).json(
             {
-                message: "Logout successful"
+                message: `Logout successful for user ${email}`,
             }
         );
     } catch (e) {
         next(e);
-    }   
+    }
 }
 
 const createInstructor = async (req, res, next) => {
