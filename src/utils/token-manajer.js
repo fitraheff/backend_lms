@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { config } from '../utils/config.js';
+import { config } from './config.js';
 import { ResponseError } from './response-error.js';
 // import { UnauthorizedError } from '../errors/UnauthorizedError.js';
 

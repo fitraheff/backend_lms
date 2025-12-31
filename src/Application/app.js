@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { config } from '../utils/config.js';
-import { limiter } from '../middlewares/rate-limiter-middlaware.js';
+import { limiter } from '../utils/rate-limiter.js';
 import { errorMiddleware } from '../middlewares/error-middlaware.js';
 import { morganMiddleware } from '../middlewares/morgan-middlaware.js';
 import { logger } from '../Application/logging.js';
