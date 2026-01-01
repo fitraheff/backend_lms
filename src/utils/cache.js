@@ -9,16 +9,31 @@ class CacheService {
                 host: config.redisHost,
                 port: config.redisPort,
                 reconnectStrategy: retries => {
-                    if (retries > 10) return new Error("Redis reconnect failed");
-                    return Math.min(retries * 500, 5000);
+                    if (retries > 5) {
+                        logger.error("Redis reconnect failed");
+                        return false; // stop retry
+                    }
+                    return Math.min(retries * 1000, 5000);
                 },
             },
         });
 
-        this.client.on('ready', () => logger.info("Redis connected"));
-        this.client.on('error', err =>
-            logger.error("Redis error", { message: err.message })
-        );
+        this.isReady = false;
+
+        this.client.on("ready", () => {
+            this.isReady = true;
+            logger.info("Redis connected");
+        });
+
+        this.client.on("end", () => {
+            this.isReady = false;
+            logger.warn("Redis connection closed");
+        });
+
+        this.client.on("error", (err) => {
+            this.isReady = false;
+            logger.error("Redis error", { message: err.message });
+        });
     }
 
     async connect() {
