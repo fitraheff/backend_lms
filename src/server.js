@@ -2,7 +2,7 @@ import { App } from './Application/app.js';
 import { config } from './utils/config.js';
 import { logger } from './Application/logging.js';
 import { prisma } from './Application/prisma.js';
-import { cacheService } from './utils/cache.js';
+import { cache } from './utils/cache.js';
 
 const PORT = config.port;
 
@@ -14,7 +14,7 @@ await prisma.$connect();
 logger.info("Database connected");
 
 // 2. Redis Connect
-await cacheService.connect();
+await cache.connect();
 logger.info("Cache service initialized");
 
 const server = App.listen(PORT, () => {
@@ -25,7 +25,7 @@ const server = App.listen(PORT, () => {
 
 // ====== GRACEFUL SHUTDOWN ======
 // Taruh di paling bawah, setelah server.listen()
-const gracefulShutdown = async (signal) => {
+const shutdown = async (signal) => {
     logger.info(`${signal} received: shutting down gracefully`);
 
     // 1. Tutup server HTTP (stop terima request baru)
@@ -34,13 +34,9 @@ const gracefulShutdown = async (signal) => {
 
         // 2. Tutup koneksi Prisma
         await prisma.$disconnect();
-        logger.info("Prisma disconnected");
 
         // 3. Tutup Redis kalau pakai
-        if (cacheService && typeof cacheService.disconnect === 'function') {
-            await cacheService.disconnect();
-            logger.info("Redis disconnected");
-        }
+        await cache.disconnect();
 
         logger.info("Graceful shutdown complete");
         process.exit(0);
@@ -53,5 +49,5 @@ const gracefulShutdown = async (signal) => {
     }, 10000);
 };
 
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

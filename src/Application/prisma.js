@@ -9,12 +9,9 @@ const adapter = new PrismaPg({ connectionString })
 const prisma = new PrismaClient({
     adapter,
     log: [
-        { level: "warn", emit: "event" },
-        { level: "error", emit: "event" },
-        // Query logging hanya di development
-        ...(config.env === "development"
-            ? [{ level: "query", emit: "event" }, { level: "info", emit: "event" }]
-            : []),
+        config.env === "development"
+            ? ["query", "info", "warn", "error"]
+            : ["warn", "error"],
     ],
 })
 
