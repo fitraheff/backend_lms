@@ -4,6 +4,9 @@ export const config = {
     env: process.env.NODE_ENV,
     port: process.env.PORT,
 
+    redisHost: process.env.REDIS_HOST,
+    redisPort: process.env.REDIS_PORT,
+    
     baseUrl: process.env.BASE_URL,
     databaseUrl: process.env.DATABASE_URL,
 

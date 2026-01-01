@@ -13,7 +13,7 @@ import userRoute from '../routes/user-api.js';
 export const App = express();
 
 // ===== BOOT TIME (COLD START DETECTOR) =====
-global.__BOOT_TIME__ = Date.now();
+// global.__BOOT_TIME__ = Date.now();
 
 App.use(helmet());
 
@@ -23,8 +23,10 @@ App.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
 }))
 
-App.use(cookieParser());
 App.use(express.json());
+App.use(cookieParser());
+App.use(morganMiddleware)
+App.use(limiter)
 
 // ===== REQUEST TIMING MIDDLEWARE =====
 App.use((req, res, next) => {
@@ -34,15 +36,15 @@ App.use((req, res, next) => {
         const end = process.hrtime.bigint();
         const durationMs = Number(end - start) / 1_000_000;
 
-        const uptime = Date.now() - global.__BOOT_TIME__;
-        const isCold = uptime < 5000;
+        // const uptime = Date.now() - global.__BOOT_TIME__;
+        // const isCold = uptime < 5000;
 
         logger.info("HTTP Request", {
             method: req.method,
             path: req.originalUrl,
             status: res.statusCode,
             duration: `${durationMs.toFixed(2)}ms`,
-            coldStart: isCold,
+            // coldStart: isCold,
         });
 
         if (durationMs > 500) {
@@ -56,10 +58,7 @@ App.use((req, res, next) => {
     next();
 });
 
-App.use(morganMiddleware)
-App.use(limiter)
-
-App.get('/health', (req, res) => {
+App.get('/health', (_, res) => {
     res.status(200).send('OK');
 });
 
