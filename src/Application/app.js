@@ -66,4 +66,3 @@ App.get('/health', (_, res) => {
 App.use('/api/V1/users', userRoute);
 
 App.use(errorMiddleware)
-

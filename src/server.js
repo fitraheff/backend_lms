@@ -2,7 +2,7 @@ import { App } from './Application/app.js';
 import { config } from './utils/config.js';
 import { logger } from './Application/logging.js';
 import { prisma } from './Application/prisma.js';
-import { cache } from './utils/cache.js';
+import { cache } from './Application/cache.js';
 
 const PORT = config.port;
 
