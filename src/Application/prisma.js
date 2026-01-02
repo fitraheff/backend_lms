@@ -9,22 +9,29 @@ const adapter = new PrismaPg({ connectionString })
 const prisma = new PrismaClient({
     adapter,
     log: [
-        { level: "warn", emit: "event" },
-        { level: "error", emit: "event" },
-        // Query logging hanya di development
-        ...(config.env === "development"
-            ? [{ level: "query", emit: "event" }, { level: "info", emit: "event" }]
-            : []),
+        config.env === "development"
+            ? [
+                { level: "query", emit: "event" },
+                { level: "info", emit: "event" },
+                { level: "warn", emit: "event" },
+                { level: "error", emit: "event" },
+            ]
+            : [
+                { level: "warn", emit: "event" },
+                { level: "error", emit: "event" },
+            ],
     ],
 })
 
-prisma.$on("query", (e) => {
-    logger.debug("Prisma Query", {
-        query: e.query,
-        params: e.params,
-        duration: `${e.duration}ms`,
+if (config.env === "development") {
+    prisma.$on("query", (e) => {
+        logger.debug("Prisma Query", {
+            query: e.query,
+            params: e.params,
+            duration: `${e.duration}ms`,
+        });
     });
-});
+}
 
 prisma.$on("info", (e) => logger.info("Prisma Info", { message: e.message }));
 prisma.$on("warn", (e) => logger.warn("Prisma Warn", { message: e.message }));
