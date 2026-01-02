@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { google } from 'googleapis';
-
+import { cache } from '../Application/cache.js';
 import { prisma } from "../Application/prisma.js";
 import tokenjwt from "../utils/token-manajer.js";
 // import { verifyRefreshToken } from "../utils/jwt.js";
@@ -233,8 +233,13 @@ const register = async (req) => {
     });
 }
 
-const getById = async (req) => {
-    const id = validate(getUserValidation, req);
+const getById = async (userId) => {
+    const id = validate(getUserValidation, userId);
+
+    const cacheUser = await cache.get(`user:${id}`);
+    if (cacheUser) {
+        return JSON.parse(cacheUser);
+    }
 
     const user = await findUser({
         id,
@@ -244,6 +249,8 @@ const getById = async (req) => {
     if (!user) {
         throw new ResponseError("user is not found", 404);
     }
+
+    await cache.set(`user:${id}`, JSON.stringify(user), 3600); // cache 1 jam
 
     return user;
 }

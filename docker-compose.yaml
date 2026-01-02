@@ -30,6 +30,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+    #   interval: 2s
+    #   timeout: 2s
+    #   retries: 30
 
   redis:
     container_name: lms-redis
@@ -39,6 +44,21 @@ services:
     volumes:
       - redis_data:/var/lib/redis/data
     restart: unless-stopped
+
+  # rabbitmq:
+  #   image: rabbitmq:management-alpine
+  #   environment:
+  #     # Pakai user non-guest (guest dibatasi ke localhost oleh RabbitMQ)
+  #     RABBITMQ_DEFAULT_USER: appuser
+  #     RABBITMQ_DEFAULT_PASS: appsecret
+  #   ports:
+  #     - "5672:5672"    # AMQP
+  #     - "15672:15672"  # Management UI
+  #   healthcheck:
+  #     test: ["CMD", "rabbitmq-diagnostics", "ping"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 20
 
 volumes:
   postgres_data:

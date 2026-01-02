@@ -42,12 +42,22 @@ class CacheService {
         }
     }
 
+    // async get(key) {
+    //     const result = await this.client.get(key);
+    //     if (result === null) {
+    //         throw new Error('Cache miss');
+    //     }
+    //     return result;
+    // }
     async get(key) {
-        const result = await this.client.get(key);
-        if (result === null) {
-            throw new Error('Cache miss');
+        if (!this.isReady) return null;
+
+        try {
+            return await this.client.get(key);
+        } catch (err) {
+            logger.warn("Redis GET error", { message: err.message });
+            return null;
         }
-        return result;
     }
 
     async set(key, value, ttl = 3600) {
