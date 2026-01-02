@@ -1,5 +1,5 @@
 import redis from 'redis';
-import config from './config.js';
+import config from '../utils/config.js';
 import { logger } from './logger.js';
 
 class CacheService {
@@ -43,7 +43,11 @@ class CacheService {
     }
 
     async get(key) {
-        return this.client.get(key);
+        const result = await this.client.get(key);
+        if (result === null) {
+            throw new Error('Cache miss');
+        }
+        return result;
     }
 
     async set(key, value, ttl = 3600) {
