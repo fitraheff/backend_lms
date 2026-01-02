@@ -1,6 +1,6 @@
 import { prisma } from '../Application/prisma.js';
 import { ResponseError } from '../utils/response-error.js';
-import tokenjwt from '../utils/jwt.js';
+import tokenjwt from '../utils/token-manajer.js';
 
 const authMiddleware = async (req, res, next) => {
     try {

@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import { google } from 'googleapis';
 
 import { prisma } from "../Application/prisma.js";
-import tokenjwt from "../utils/jwt.js";
+import tokenjwt from "../utils/token-manajer.js";
 // import { verifyRefreshToken } from "../utils/jwt.js";
 import { ResponseError } from "../utils/response-error.js";
 import { config } from "../utils/config.js";

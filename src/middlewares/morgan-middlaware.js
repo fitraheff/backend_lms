@@ -1,6 +1,6 @@
 import morgan from "morgan";
 import { logger } from "../Application/logging.js";
-import config from "../utils/config.js";
+import { config } from "../utils/config.js";
 
 const morganMiddleware = morgan("combined",
     {

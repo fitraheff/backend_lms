@@ -8,19 +8,17 @@ const connectionString = `${config.databaseUrl}`;
 const adapter = new PrismaPg({ connectionString })
 const prisma = new PrismaClient({
     adapter,
-    log: [
-        config.env === "development"
-            ? [
-                { level: "query", emit: "event" },
-                { level: "info", emit: "event" },
-                { level: "warn", emit: "event" },
-                { level: "error", emit: "event" },
-            ]
-            : [
-                { level: "warn", emit: "event" },
-                { level: "error", emit: "event" },
-            ],
-    ],
+    log: config.env === "development"
+        ? [
+            { level: "query", emit: "event" },
+            { level: "info", emit: "event" },
+            { level: "warn", emit: "event" },
+            { level: "error", emit: "event" },
+        ]
+        : [
+            { level: "warn", emit: "event" },
+            { level: "error", emit: "event" },
+        ],
 })
 
 if (config.env === "development") {

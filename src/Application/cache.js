@@ -1,6 +1,6 @@
 import redis from 'redis';
-import config from '../utils/config.js';
-import { logger } from './logger.js';
+import { config } from '../utils/config.js';
+import { logger } from './logging.js';
 
 class CacheService {
     constructor() {
