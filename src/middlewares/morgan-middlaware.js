@@ -1,5 +1,6 @@
 import morgan from "morgan";
 import { logger } from "../Application/logging.js";
+import config from "../utils/config.js";
 
 const morganMiddleware = morgan("combined",
     {
@@ -8,9 +9,9 @@ const morganMiddleware = morgan("combined",
         },
         skip: (req, res) =>
             req.url === "/health" ||
-            process.env.NODE_ENV === "test" ||
+            config.env === "test" ||
             req.url.startsWith('/static') ||
-            (process.env.NODE_ENV === "production" && res.statusCode < 400),
+            (config.env === "production" && res.statusCode < 400),
     }
 );
 
