@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+// import swaggerUi from 'swagger-ui-express';
+// import swaggerDocument from '../../Doc/swagger.json' with {type: 'json'};
 import { config } from '../utils/config.js';
 import { limiter } from '../utils/rate-limiter.js';
 import { errorMiddleware } from '../middlewares/error-middlaware.js';
@@ -61,6 +63,9 @@ App.use((req, res, next) => {
 App.get('/health', (_, res) => {
     res.status(200).send('OK');
 });
+
+// Swagger
+// App.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Routes
 App.use('/api/V1/users', userRoute);
