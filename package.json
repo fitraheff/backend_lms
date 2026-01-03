@@ -7,7 +7,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "swagger-autogen": "node src/utils/swagger.js"
   },
   "keywords": [],
   "author": "",
@@ -29,6 +30,8 @@
     "morgan": "^1.10.1",
     "pg": "^8.16.3",
     "redis": "^5.10.0",
+    "swagger-autogen": "^2.23.7",
+    "swagger-ui-express": "^5.0.1",
     "winston": "^3.19.0"
   },
   "devDependencies": {
