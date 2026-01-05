@@ -1,4 +1,5 @@
 import userService from "../services/user-service.js";
+import { config } from "../utils/config.js";
 
 const googleLogin = async (req, res) => {
     const authUrl = userService.getGoogleLoginUrl();
@@ -16,14 +17,15 @@ const googleCallback = async (req, res, next) => {
 
         // Redirect ke frontend dengan accessToken di query (untuk SPA)
         // ATAU return JSON kalau API-only
-        // const redirectUrl = `${config.frontendUrl}/auth-success?accessToken=${accessToken}&userId=${user.id}`;
-        // return res.redirect(redirectUrl);
+        const redirectUrl = `${config.frontendUrl}/auth-success?accessToken=${result.accessToken}`;
+        // const redirectUrl = `${config.frontendUrl}/auth-success?accessToken=${result.accessToken}`;
+        return res.redirect(redirectUrl);
 
         // Alternatif lebih aman (rekomendasi untuk production):
-        return res.json({
-            message: "Google OAuth successful",
-            data: result
-        });
+        // return res.json({
+        //     message: "Google OAuth successful",
+        //     data: result
+        // });
     } catch (error) {
         next(error);
         // console.error("Google OAuth Error:", error);
@@ -62,7 +64,7 @@ export const register = async (req, res, next) => {
 
 const getById = async (req, res, next) => {
     try {
-        const userId = req.params.id;
+        const userId = req.params.id || req.user.id;
         const result = await userService.getById(userId);
         res.status(200).json(
             {
