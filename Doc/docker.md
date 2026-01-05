@@ -73,3 +73,7 @@ Dokumen ini berisi kumpulan perintah Docker Compose dan tips agar proses pengemb
 ### H. `docker system prune -a`
 * **Kegunaan:** "Sapu Jagat" untuk menghapus semua image, container, dan network yang tidak terpakai.
 * **Efek:** Mengosongkan banyak ruang penyimpanan, tapi Anda harus mendownload/build ulang image saat akan menjalankan project lagi.
+
+### `docker images`
+
+### `docker container ps`

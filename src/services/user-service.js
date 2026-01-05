@@ -56,7 +56,7 @@ const clearRefreshTokenCookie = (res) => {
 const oauth2Client = new google.auth.OAuth2(
     config.googleClientId,
     config.googleClientSecret,
-    `${config.baseUrl}/api/users/google-callback` // gunakan config, bukan hardcode localhost
+    `${config.baseUrl}/api/V1/users/google-callback` // gunakan config, bukan hardcode localhost
 );
 
 const scopes = [
