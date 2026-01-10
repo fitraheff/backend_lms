@@ -10,8 +10,6 @@ enum Role {
   STUDENT
   INSTRUCTOR
   ADMIN
-
-  @@map("roles")
 }
 
 model User {
@@ -47,17 +45,18 @@ model Module {
   cover         String    @db.Text
 
   content       ModuleContent[]
+  enroll        Enroll[]
 
   category      Category  @relation(fields: [categoryId], references: [id])
-  categoryId      
+  categoryId    String      
 
   instructor    User      @relation(fields: [instructorId], references: [id])
-  instructorId
+  instructorId  String
 
   createdAt     DateTime  @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
 
-  @@map("module")
+  @@map("modules")
 }
 
 model Category {
@@ -69,24 +68,22 @@ model Category {
 
   modules    Module[]
 
-  @@map("category)
+  @@map("category")
 }
 
-enum TYPE {
+enum Type {
   PDF
   VIDEO
-
-  @@map("types")
 }
 
 model ModuleContent {
   id         String   @id @default(cuid())
   title      String   @db.VarChar(255)
-  type       type
+  type       Type  
   file_link  String
 
   module     Module   @relation(fields: [moduleId], references: [id])
-  moduleId
+  moduleId   String
 
   createdAt  DateTime  @default(now()) @db.Timestamptz(3)
   updatedAt  DateTime  @updatedAt @db.Timestamptz(3)
@@ -98,11 +95,11 @@ model Enroll {
   id        String    @id @default(cuid())
 
   student   User      @relation(fields: [studentId], references: [id])
-  studentId
+  studentId String
   module    Module    @relation(fields: [moduleId], references: [id])
-  moduleId
+  moduleId  String
 
   enrolledAt  DateTime  @default(now()) @db.Timestamptz(3)
 
-  @map("enroll") 
+  @@map("enroll") 
 }
