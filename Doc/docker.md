@@ -77,3 +77,12 @@ Dokumen ini berisi kumpulan perintah Docker Compose dan tips agar proses pengemb
 ### `docker images`
 
 ### `docker container ps`
+
+### Switch to another terminal window, and type `docker image ls` to list local images.
+
+### Stop the application, either by running `docker compose down` from within your project directory in the second terminal, or by hitting `CTRL+C` in the original terminal where you started the app.
+
+### If you started Compose with , stop your services once you've finished with them:`docker compose up -d`
+    `docker compose stop`
+
+### You can bring everything down, removing the containers entirely, with the command.`docker compose down`

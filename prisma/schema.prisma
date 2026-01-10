@@ -25,12 +25,13 @@ model User {
 
   role              Role     @default(STUDENT)
 
-  refreshToken      String? @db.Text  
+  refreshToken      String?  @db.Text  
 
   createdAt         DateTime @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime @updatedAt @db.Timestamptz(3)
 
-  //posts Post[]
+  modules           Module[]
+  enrolls           Enroll[]
 
   @@index([email])
   @@index([role])
@@ -38,11 +39,70 @@ model User {
   @@map("users")
 }
 
-//model Post {
-//  id        Int     @id @default(autoincrement())
-//  title     String
-//  content   String?
-// published Boolean @default(false)
-//  author    User    @relation(fields: [authorId], references: [id])
-//  authorId  Int
-//}
+model Module {
+  id            String    @id @default(cuid())
+  title         String    @unique @db.VarChar(255)
+  desc          String    @db.VarChar(1000)
+  price         Int
+  cover         String    @db.Text
+
+  content       ModuleContent[]
+
+  category      Category  @relation(fields: [categoryId], references: [id])
+  categoryId      
+
+  instructor    User      @relation(fields: [instructorId], references: [id])
+  instructorId
+
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@map("module")
+}
+
+model Category {
+  id      String    @id @default(cuid())
+  name    String    @db.VarChar(255)
+
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @db.Timestamptz(3)
+
+  modules    Module[]
+
+  @@map("category)
+}
+
+enum TYPE {
+  PDF
+  VIDEO
+
+  @@map("types")
+}
+
+model ModuleContent {
+  id         String   @id @default(cuid())
+  title      String   @db.VarChar(255)
+  type       type
+  file_link  String
+
+  module     Module   @relation(fields: [moduleId], references: [id])
+  moduleId
+
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@map("module_content")
+}
+
+model Enroll {
+  id        String    @id @default(cuid())
+
+  student   User      @relation(fields: [studentId], references: [id])
+  studentId
+  module    Module    @relation(fields: [moduleId], references: [id])
+  moduleId
+
+  enrolledAt  DateTime  @default(now()) @db.Timestamptz(3)
+
+  @map("enroll") 
+}
