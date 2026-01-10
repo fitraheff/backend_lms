@@ -15,7 +15,13 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+    #Docker akan otomatis me-restart kontainer
     restart: unless-stopped
+    # develop:
+      # watch:
+        # - path: .
+          # action: sync
+          # target: /app
     # command: npm run dev
 
   postgres:
