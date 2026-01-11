@@ -23,6 +23,7 @@ const email = Joi.string()
 
 const password = Joi.string()
     .required()
+    .trim()
     .min(6)
     .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .messages({
