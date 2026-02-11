@@ -43,6 +43,8 @@ model Module {
   desc          String    @db.VarChar(1000)
   price         Int
   cover         String    @db.Text
+  //isPublished   Boolean
+  //level         enum: ['beginner', 'intermediate', 'advanced']
 
   content       ModuleContent[]
   enroll        Enroll[]
