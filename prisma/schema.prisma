@@ -37,14 +37,20 @@ model User {
   @@map("users")
 }
 
+enum Level {
+  BEGINNER,
+  INTERMEDIATE,
+  ADVANCED
+}
+
 model Module {
   id            String    @id @default(cuid())
   title         String    @unique @db.VarChar(255)
   desc          String    @db.VarChar(1000)
   price         Int
   cover         String    @db.Text
-  //isPublished   Boolean
-  //level         enum: ['beginner', 'intermediate', 'advanced']
+  isPublished   Boolean
+  level         Level
 
   content       ModuleContent[]
   enroll        Enroll[]
