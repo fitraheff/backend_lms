@@ -11,6 +11,7 @@ import { morganMiddleware } from '../middlewares/morgan-middlaware.js';
 import { logger } from '../Application/logging.js';
 
 import userRoute from '../routes/user-api.js';
+import classRoute from '../routes/class-api.js';
 
 export const App = express();
 
@@ -69,5 +70,6 @@ App.get('/health', (_, res) => {
 
 // Routes
 App.use('/api/V1/users', userRoute);
+App.use('/api/V1/classes', classRoute);
 
 App.use(errorMiddleware)
