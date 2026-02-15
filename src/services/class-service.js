@@ -1,8 +1,8 @@
 import { prisma } from "../Application/prisma.js";
-import { cache } from "../Application/cache.js";
+// import { cache } from "../Application/cache.js";
 import { ResponseError } from "../utils/response-error.js";
 import { validate } from "../validations/validation.js";
-import { Validation } from "../validations/module-validation.js";
+import Validation from "../validations/class-validation.js";
 
 const defaultModuleSelect = {
     id: true,

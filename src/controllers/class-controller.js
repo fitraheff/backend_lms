@@ -1,4 +1,4 @@
-import classService from "../services/class-service";
+import classService from "../services/class-service.js";
 
 const create = async (req, res, next) => {
     try {

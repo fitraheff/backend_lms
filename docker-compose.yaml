@@ -13,16 +13,43 @@ services:
       - postgres
       - redis
     volumes:
-      - .:/app
+      # - .:/app
       - /app/node_modules
     #Docker akan otomatis me-restart kontainer
     restart: unless-stopped
-    # develop:
-      # watch:
-        # - path: .
-          # action: sync
-          # target: /app
-    # command: npm run dev
+    # ========== INI YANG DIAKTIFKAN ==========
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
+        # # Action 1: Sync file biasa (untuk .js, .json, dll)
+        # - path: ./src
+        #   action: sync
+        #   target: /app/src
+        #   ignore:
+        #     - node_modules/
+        #     - .git/
+        #     - dist/
+        #     - "*.log"
+        
+        # # Action 2: Sync + Restart untuk file prisma (karena generate ulang)
+        # - path: ./prisma
+        #   action: sync+restart
+        #   target: /app/prisma
+        #   ignore:
+        #     - node_modules/
+        #     - "*.db"
+        
+        # # Action 3: Rebuild kalau package.json berubah
+        # - path: package.json
+        #   action: rebuild
+        
+        # # Action 4: Sync untuk file konfigurasi
+        # - path: .env
+        #   action: sync+restart
+        #   target: /app/.env
+    # ==========================================
 
   postgres:
     container_name: lms-postgres

@@ -38,8 +38,8 @@ model User {
 }
 
 enum Level {
-  BEGINNER,
-  INTERMEDIATE,
+  BEGINNER
+  INTERMEDIATE
   ADVANCED
 }
 

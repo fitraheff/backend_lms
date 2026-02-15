@@ -1,4 +1,4 @@
-import joi from 'joi'
+import joi from "joi";
 
 const title = joi.string()
     .min(3)
@@ -21,33 +21,38 @@ const desc = joi.string()
         'string.max': 'Description maksimal 1000 karakter'
     })
 
-const type = joi.string()
-    .valid('VIDEO', 'PDF')
+const price = joi.number()
     .required()
+    .integer()
     .messages({
-        'any.required': 'Type wajib diisi',
-        'string.valid': 'Type harus VIDEO atau PDF'
+        'any.required': 'Price wajib diisi',
+        'number.base': 'Price harus berupa angka'
     })
 
-const file_url = joi.string().uri()
+const cover = joi.string().uri()
     .required()
     .messages({
-        'any.required': 'URL wajib diisi',
-        'string.uri': 'URL harus berupa URL yang valid'
+        'any.required': 'Cover wajib diisi',
+        'string.uri': 'Cover harus berupa URL'
     })
 
 const createModuleValidation = joi.object({
     title: title,
     desc: desc,
-    type: type,
-    file_url: file_url
+    price: price,
+    cover: cover,
+    categoryId: joi.string().uuid().required(),
+    level: joi.string().valid('BEGINNER', 'INTERMEDIATE', 'ADVANCED').required()
 })
 
 const updateModuleValidation = joi.object({
     title: title.optional(),
     desc: desc.optional(),
-    type: type.optional(),
-    file_url: file_url.optional()
+    price: price.optional(),
+    cover: cover.optional(),
+    categoryId: joi.string().uuid().optional(),
+    isPublished: joi.boolean().optional(),
+    level: joi.string().valid('BEGINNER', 'INTERMEDIATE', 'ADVANCED').optional()
 })
 
 export default {
