@@ -23,6 +23,13 @@ services:
         - action: sync
           path: .
           target: /app
+          # initial_sync: true
+          ignore:
+            - node_modules/
+            - .git/
+            - "*.log"
+        - action: rebuild
+          path: package.json
         # # Action 1: Sync file biasa (untuk .js, .json, dll)
         # - path: ./src
         #   action: sync

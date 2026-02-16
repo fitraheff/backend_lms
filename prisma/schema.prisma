@@ -99,6 +99,13 @@ model ModuleContent {
   @@map("module_content")
 }
 
+enum Type {
+  ACTIVE,
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
 model Enroll {
   id        String    @id @default(cuid())
 

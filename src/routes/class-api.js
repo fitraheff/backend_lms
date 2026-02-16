@@ -3,7 +3,6 @@ import classController from '../controllers/class-controller.js';
 import auth from '../middlewares/auth-middlaware.js';
 
 const classRoute = express.Router();
-
 classRoute.post('/', auth.authMiddleware, auth.restrictTo('ADMIN', 'INSTRUCTOR'), classController.create);
 classRoute.patch('/:id', auth.authMiddleware, auth.restrictTo('ADMIN', 'INSTRUCTOR'), classController.update);
 classRoute.get('/search', auth.authMiddleware, classController.search);
