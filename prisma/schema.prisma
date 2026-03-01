@@ -54,9 +54,9 @@ model Module {
 
   content       ModuleContent[]
   enroll        Enroll[]
-
-  category      Category  @relation(fields: [categoryId], references: [id])
-  categoryId    String      
+  
+  categoryId    String?  
+  category      Category?  @relation(fields: [categoryId], references: [id])    
 
   instructor    User      @relation(fields: [instructorId], references: [id])
   instructorId  String
@@ -99,8 +99,8 @@ model ModuleContent {
   @@map("module_content")
 }
 
-enum Type {
-  ACTIVE,
+enum Status {
+  ACTIVE
   COMPLETED
   CANCELLED
   EXPIRED
@@ -113,6 +113,8 @@ model Enroll {
   studentId String
   module    Module    @relation(fields: [moduleId], references: [id])
   moduleId  String
+
+  status    Status
 
   enrolledAt  DateTime  @default(now()) @db.Timestamptz(3)
 

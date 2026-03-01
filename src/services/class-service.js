@@ -13,14 +13,17 @@ const defaultModuleSelect = {
 }
 
 const findModule = async (title, select = defaultModuleSelect) => {
-    if (!title) {
-        throw new ResponseError('title harus ada', 400)
-    }
 
     const module = await prisma.module.findUnique({
-        where: { title },
+        where: {
+            title: title
+        },
         select,
     })
+
+    if (!module) {
+        throw new ResponseError("Module not found", 404)
+    }
 
     return module
 }
@@ -35,22 +38,27 @@ const checkInstructorAndCategoryMustExist = async (instructorId, categoryId) => 
         throw new ResponseError('Instructor tidak valid', 403)
     }
 
-    const category = await prisma.category.findUnique({
-        where: { id: categoryId },
-        select: { id: true }
-    })
+    // Cek category hanya jika categoryId diberikan
+    if (categoryId) {
+        const category = await prisma.category.findUnique({
+            where: { id: categoryId },
+            select: { id: true }
+        });
 
-    if (!category) {
-        throw new ResponseError('Category tidak ditemukan', 404)
+        if (!category) {
+            throw new ResponseError("Category not found", 404);
+        }
     }
 }
-const create = async (req, instructorId, categoryId) => {
+const create = async (req, instructorId) => {
     const data = validate(Validation.createModuleValidation, req)
 
-    await checkInstructorAndCategoryMustExist(instructorId, categoryId)
+    await checkInstructorAndCategoryMustExist(instructorId, data.categoryId)
 
-    const module = await findModule({
-        title: data.title,
+    const module = await prisma.module.findUnique({
+        where: {
+            title: data.title
+        },
         select: {
             title: true
         }
@@ -66,10 +74,10 @@ const create = async (req, instructorId, categoryId) => {
             desc: data.desc,
             price: data.price,
             cover: data.cover,
-            // instructorId,
-            categoryId,
+            instructorId: instructorId,
+            categoryId: data.categoryId,
             isPublished: false,
-            level: 'BEGINNER'
+            level: data.level || 'BEGINNER'
         }
     })
 }
@@ -178,13 +186,15 @@ const get = async (moduleId) => {
     return module
 }
 
-const search = async (request) => {
+const search = async (request = {}) => {
     // Validasi input request sesuai dengan schema searchModuleValidation
     // request = validate(searchModuleValidation, request);
+    const page = parseInt(request.page) || 1; // Halaman default 1 jika tidak diberikan
+    const size = parseInt(request.size) || 10;
 
     // Hitung berapa banyak data yang perlu di-skip untuk pagination
     // Contoh: Page 1 skip 0, Page 2 skip 10, Page 3 skip 20 (dengan size 10)
-    const skip = (request.page - 1) * request.size;
+    const skip = (page - 1) * size;
 
     // Inisialisasi object where untuk filter query database
     const where = {};
@@ -210,14 +220,18 @@ const search = async (request) => {
         prisma.module.findMany({
             where,                              // Terapkan filter yang sudah di-set
             select: {
-                defaultModuleSelect,
+                ...defaultModuleSelect,
                 category: {
-                    id: true,
-                    title: true
+                    select: {
+                        id: true,
+                        name: true
+                    }
                 },
                 instructor: {
-                    id: true,
-                    name: true
+                    select: {
+                        id: true,
+                        name: true
+                    }
                 },
                 level: true,
                 // averageRating: {
@@ -233,7 +247,7 @@ const search = async (request) => {
                 //     }
                 // }
             },      // Pilih field mana saja yang ditampilkan
-            take: request.size,                 // Batasi jumlah data per halaman (misal: 10)
+            take: size,                 // Batasi jumlah data per halaman (misal: 10)
             skip: skip,                         // Lewati data sesuai halaman
             orderBy: { createdAt: 'desc' }     // Urutkan dari yang paling baru
         }),
@@ -245,9 +259,9 @@ const search = async (request) => {
     return {
         data: modules,                        // Array berisi module-module yang ditemukan
         paging: {
-            page: request.page,                 // Halaman saat ini
+            page: page,                 // Halaman saat ini
             total_item: totalItems,             // Total semua data yang match filter
-            total_page: Math.ceil(totalItems / request.size)  // Total halaman (pembulatan ke atas)
+            total_page: Math.ceil(totalItems / size)  // Total halaman (pembulatan ke atas)
         }
     };
 };

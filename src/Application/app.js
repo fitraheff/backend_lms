@@ -12,7 +12,8 @@ import { logger } from '../Application/logging.js';
 
 import userRoute from '../routes/user-api.js';
 import classRoute from '../routes/class-api.js';
-import moduleRoute from '../routes/module-api.js'
+import moduleRoute from '../routes/module-api.js';
+import enrollmentRoute from '../routes/enrollment-api.js';
 
 export const App = express();
 
@@ -73,5 +74,6 @@ App.get('/health', (_, res) => {
 App.use('/api/V1/users', userRoute);
 App.use('/api/V1/classes', classRoute);
 App.use('/api/V1/modules', moduleRoute);
+App.use('/api/V1/enrollments', enrollmentRoute);
 
 App.use(errorMiddleware)

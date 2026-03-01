@@ -1,5 +1,5 @@
 import express from 'express';
-import enrollmentControll from '../controllers/enrollment-controll';
+import enrollmentControll from '../controllers/enrollment-controller.js';
 import auth from '../middlewares/auth-middlaware.js';
 
 const enrollmentRoute = express.Router();

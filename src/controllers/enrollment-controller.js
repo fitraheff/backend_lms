@@ -1,4 +1,4 @@
-import enrollmentService from "../services/enrollment-service";
+import enrollmentService from "../services/enrollment-service.js";
 
 const enroll = async (req, res, next) => {
     try {

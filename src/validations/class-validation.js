@@ -41,8 +41,8 @@ const createModuleValidation = joi.object({
     desc: desc,
     price: price,
     cover: cover,
-    categoryId: joi.string().uuid().required(),
-    level: joi.string().valid('BEGINNER', 'INTERMEDIATE', 'ADVANCED').required()
+    categoryId: joi.string().uuid().optional(),
+    level: joi.string().valid('BEGINNER', 'INTERMEDIATE', 'ADVANCED').optional()
 })
 
 const updateModuleValidation = joi.object({

@@ -43,8 +43,8 @@ const get = async (req, res, next) => {
 
 const search = async (req, res, next) => {
     try {
-        const { keyword } = req.query;
-        const result = await classService.search(keyword);
+        // const { keyword } = req.query;
+        const result = await classService.search(req.query);
         res.status(200).json({
             // message: "Search class successful",
             data: result
