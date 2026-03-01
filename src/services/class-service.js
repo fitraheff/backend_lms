@@ -12,12 +12,10 @@ const defaultModuleSelect = {
     cover: true
 }
 
-const findModule = async (title, select = defaultModuleSelect) => {
+const findModule = async ({where, select = defaultModuleSelect}) => {
 
     const module = await prisma.module.findUnique({
-        where: {
-            title: title
-        },
+        where,
         select,
     })
 
@@ -141,7 +139,7 @@ const get = async (moduleId) => {
             category: {
                 select: {
                     id: true,
-                    title: true
+                    name: true
                 }
             },
             instructor: {
@@ -152,30 +150,30 @@ const get = async (moduleId) => {
             },
             isPublished: true,
             level: true,
-            totalLessons: {
-                select: {
-                    _count: true
-                }
-            },
-            totalDuration: {
-                select: {
-                    _sum: {
-                        duration: true
-                    }
-                }
-            },
-            averageRating: {
-                select: {
-                    _avg: {
-                        rating: true
-                    }
-                }
-            },
-            totalStudents: {
-                select: {
-                    _count: true
-                }
-            }
+            // totalLessons: {
+            //     select: {
+            //         _count: true
+            //     }
+            // },
+            // totalDuration: {
+            //     select: {
+            //         _sum: {
+            //             duration: true
+            //         }
+            //     }
+            // },
+            // averageRating: {
+            //     select: {
+            //         _avg: {
+            //             rating: true
+            //         }
+            //     }
+            // },
+            // totalStudents: {
+            //     select: {
+            //         _count: true
+            //     }
+            // }
         }
     })
 
