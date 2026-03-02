@@ -87,8 +87,9 @@ enum Type {
 model ModuleContent {
   id         String   @id @default(cuid())
   title      String   @db.VarChar(255)
+  desc       String   @db.VarChar(1000)
   type       Type  
-  file_link  String
+  file_url  String
 
   module     Module   @relation(fields: [moduleId], references: [id])
   moduleId   String

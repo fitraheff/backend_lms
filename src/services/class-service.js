@@ -328,7 +328,7 @@ const myModules = async (instructorId) => {
             category: {
                 select: {
                     id: true,
-                    title: true
+                    name: true
                 }
             },
             createdAt: true,

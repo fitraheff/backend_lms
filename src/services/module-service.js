@@ -7,7 +7,7 @@ const defaultModuleSelect = {
     id: true,
     title: true,
     desc: true,
-    file: true,
+    file_url: true,
     type: true
 }
 
@@ -16,7 +16,7 @@ const findModule = async (title, select = defaultModuleSelect) => {
         throw new ResponseError('title harus ada', 400)
     }
 
-    const module = await prisma.module.findUnique({
+    const module = await prisma.moduleContent.findFirst({
         where: { title },
         select,
     })
@@ -25,7 +25,7 @@ const findModule = async (title, select = defaultModuleSelect) => {
 }
 
 const getModuleByClassId = async (classId) => {
-    const modules = await prisma.module.findMany({
+    const modules = await prisma.moduleContent.findMany({
         where: { classId },
         select: defaultModuleSelect
     })
@@ -38,7 +38,7 @@ const getModuleByClassId = async (classId) => {
 }
 
 const getModuleById = async (id) => {
-    const module = await prisma.module.findUnique({
+    const module = await prisma.moduleContent.findUnique({
         where: { id },
         select: defaultModuleSelect
     })
@@ -59,13 +59,13 @@ const create = async (req, classId) => {
         throw new ResponseError("Module alredy exists", 400)
     }
 
-    return await prisma.module.create({
+    return await prisma.moduleContent.create({
         data: {
             title: data.title,
             desc: data.desc,
-            file: data.file,
+            file_url: data.file_url,
             type: data.type,
-            classId
+            moduleId: classId
         }
     })
 }
@@ -80,7 +80,7 @@ const update = async (req, moduleId) => {
         throw new ResponseError("Module not found", 404)
     }
 
-    return await prisma.module.update({
+    return await prisma.moduleContent.update({
         where: {
             id: moduleId
         },
@@ -93,7 +93,7 @@ const update = async (req, moduleId) => {
 }
 
 const remove = async (moduleId) => {
-    const module = await prisma.module.findUnique({
+    const module = await prisma.moduleContent.findUnique({
         where: { id: moduleId }
     })
 

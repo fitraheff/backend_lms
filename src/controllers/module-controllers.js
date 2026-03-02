@@ -4,7 +4,7 @@ const create = async (req, res, next) => {
     try {
         // const instructorId = req.user.id;
         const classId = req.params.classId;
-        const result = await moduleService.create(req, classId);
+        const result = await moduleService.create(req.body, classId);
         res.status(200).json({
             message: "Create module successful",
             data: result
