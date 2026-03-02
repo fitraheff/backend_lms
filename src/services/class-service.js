@@ -12,7 +12,7 @@ const defaultModuleSelect = {
     cover: true
 }
 
-const findModule = async ({where, select = defaultModuleSelect}) => {
+const findModule = async ({ where, select = defaultModuleSelect }) => {
 
     const module = await prisma.module.findUnique({
         where,
@@ -88,18 +88,27 @@ const update = async (req, moduleId, instructorId) => {
     const module = await findModule({
         where: {
             id: moduleId,
-            // instructorId,
-            // categoryId
-        },
-        select: {
-            id: true,
-            // instructorId: true,
-            // categoryId: true
+            instructorId: instructorId
         }
     })
 
     if (!module) {
         throw new ResponseError("Module not found", 404)
+    }
+
+    if (data.title) {
+        const existingModule = await prisma.module.findUnique({
+            where: {
+                title: data.title
+            },
+            select: {
+                title: true
+            }
+        })
+
+        if (existingModule) {
+            throw new ResponseError("Module alredy exists", 400)
+        }
     }
 
     return await prisma.module.update({
@@ -121,6 +130,20 @@ const update = async (req, moduleId, instructorId) => {
             desc: true,
             price: true,
             cover: true,
+            category: {
+                select: {
+                    id: true,
+                    name: true
+                }
+            },
+            instructor: {
+                select: {
+                    id: true,
+                    name: true,
+                }
+            },
+            isPublished: true,
+            level: true
             // instructorId: true,
             // categoryId: true
         }

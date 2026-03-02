@@ -18,7 +18,7 @@ const update = async (req, res, next) => {
     try {
         const instructorId = req.user.id;
         const moduleId = req.params.id;
-        const result = await classService.update(req, moduleId, instructorId);
+        const result = await classService.update(req.body, moduleId, instructorId);
         res.status(200).json({
             message: "Update class successful",
             data: result
